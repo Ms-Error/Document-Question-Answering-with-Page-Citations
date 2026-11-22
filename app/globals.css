@@ -1,0 +1,292 @@
+@import "tailwindcss";
+
+/* 
+ * Veridocs Design System — Legal/Financial Document Workspace
+ * Calm, dense, trustworthy, fast.
+ * 4px baseline grid, crisp 1px borders, warm serif titles, tabular mono data.
+ */
+
+:root {
+  /* Warm Archival Off-White (Light Mode) */
+  --bg-canvas: #f6f5f1;
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #fbfaf8;
+  --bg-subtle: #f0eee8;
+  --bg-hover: #eae7df;
+  
+  --border-subtle: #e5e2d9;
+  --border-default: #d8d4c7;
+  --border-strong: #bcb6a4;
+
+  --text-primary: #18191b;
+  --text-secondary: #4b515d;
+  --text-muted: #79808f;
+
+  /* Accent: Controlled Orange (5-10% of screen) */
+  --color-accent: #ea580c;
+  --color-accent-hover: #c2410c;
+  --color-accent-subtle: rgba(234, 88, 12, 0.08);
+  --color-accent-border: rgba(234, 88, 12, 0.3);
+
+  /* Status Tokens */
+  --color-success: #15803d;
+  --color-success-bg: rgba(21, 128, 61, 0.08);
+  --color-success-border: rgba(21, 128, 61, 0.25);
+
+  --color-warning: #b45309;
+  --color-warning-bg: rgba(180, 83, 9, 0.08);
+  --color-warning-border: rgba(180, 83, 9, 0.25);
+
+  --color-danger: #b91c1c;
+  --color-danger-bg: rgba(185, 28, 28, 0.08);
+  --color-danger-border: rgba(185, 28, 28, 0.25);
+}
+
+.dark {
+  /* Warm Graphite Ink (Dark Mode) */
+  --bg-canvas: #111215;
+  --bg-surface: #16171b;
+  --bg-surface-raised: #1c1e23;
+  --bg-subtle: #22252c;
+  --bg-hover: #292d35;
+  
+  --border-subtle: #242730;
+  --border-default: #2f3440;
+  --border-strong: #444a5b;
+
+  --text-primary: #f2f3f5;
+  --text-secondary: #9da3af;
+  --text-muted: #6b7280;
+
+  /* Accent: Orange Anchor */
+  --color-accent: #f97316;
+  --color-accent-hover: #ea580c;
+  --color-accent-subtle: rgba(249, 115, 22, 0.12);
+  --color-accent-border: rgba(249, 115, 22, 0.35);
+
+  /* Status Tokens */
+  --color-success: #22c55e;
+  --color-success-bg: rgba(34, 197, 94, 0.1);
+  --color-success-border: rgba(34, 197, 94, 0.25);
+
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-warning-border: rgba(245, 158, 11, 0.25);
+
+  --color-danger: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.1);
+  --color-danger-border: rgba(239, 68, 68, 0.25);
+}
+
+@theme {
+  --color-midnight-950: var(--bg-canvas);
+  --color-midnight-900: var(--bg-surface);
+  --color-midnight-800: var(--bg-surface-raised);
+  --color-midnight-700: var(--bg-subtle);
+  --color-midnight-600: var(--bg-hover);
+
+  --color-surface-primary: var(--bg-surface);
+  --color-surface-secondary: var(--bg-surface-raised);
+  --color-surface-elevated: var(--bg-subtle);
+  --color-surface-glass: var(--bg-surface);
+
+  --color-accent-primary: var(--color-accent);
+  --color-accent-secondary: var(--color-accent-hover);
+  --color-accent-glow: var(--color-accent-subtle);
+
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-active: var(--color-accent-border);
+
+  --font-serif: var(--font-serif), Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: var(--font-plus-jakarta), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Base Styles */
+html {
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  margin: 0;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Typography Helpers */
+.font-serif-doc {
+  font-family: var(--font-serif);
+}
+
+.font-mono-data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbars: Minimalist, Unobtrusive */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Panels: Crisp 1px Borders, No Blur Slop */
+.workspace-panel {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+.workspace-surface-raised {
+  background: var(--bg-surface-raised);
+  border-color: var(--border-default);
+}
+
+/* Citation Bounding Box Highlight in PDF Canvas */
+.citation-highlight-box {
+  background: rgba(249, 115, 22, 0.22);
+  border: 1.5px solid var(--color-accent);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.4);
+}
+
+@keyframes citation-flash {
+  0% {
+    background-color: rgba(249, 115, 22, 0.6);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.6);
+  }
+  100% {
+    background-color: rgba(249, 115, 22, 0.22);
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.4);
+  }
+}
+
+.citation-flash-active {
+  animation: citation-flash 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Selection */
+::selection {
+  background: rgba(249, 115, 22, 0.25);
+  color: inherit;
+}
+
+/* Markdown Rendering in Document Intelligence Chat */
+.markdown-content {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.markdown-content p {
+  margin-bottom: 0.65em;
+  color: var(--text-primary);
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 1em;
+  margin-bottom: 0.35em;
+  letter-spacing: -0.01em;
+}
+
+.markdown-content h1 { font-size: 1.05rem; }
+.markdown-content h2 { font-size: 0.95rem; }
+.markdown-content h3 { font-size: 0.9rem; }
+
+.markdown-content ul, .markdown-content ol {
+  margin-top: 0.35em;
+  margin-bottom: 0.65em;
+  padding-left: 1.25em;
+}
+
+.markdown-content li {
+  margin-bottom: 0.3em;
+  color: var(--text-primary);
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.markdown-content code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.markdown-content blockquote {
+  border-left: 2px solid var(--color-accent);
+  padding: 0.35em 0.75em;
+  margin: 0.6em 0;
+  background: var(--color-accent-subtle);
+  color: var(--text-secondary);
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 12.5px;
+  border: 1px solid var(--border-default);
+}
+
+.markdown-content th {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 0.4em 0.65em;
+  border: 1px solid var(--border-default);
+  text-align: left;
+}
+
+.markdown-content td {
+  padding: 0.4em 0.65em;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.markdown-content tr:nth-child(even) td {
+  background: var(--bg-surface-raised);
+}

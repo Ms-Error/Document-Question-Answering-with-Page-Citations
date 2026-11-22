@@ -1,0 +1,205 @@
+"""
+Universal OpenAI-compatible LLM service for Veridocs.
+Works with any hosted OpenAI endpoint (OpenAI, Groq, DeepSeek, etc.) or local Ollama.
+No external provider-specific SDK bloat.
+"""
+
+import os
+import re
+import logging
+from typing import List, Dict, Any, Optional, AsyncGenerator
+from openai import OpenAI
+
+from config import get_settings
+
+logger = logging.getLogger(__name__)
+
+SYSTEM_PROMPT = """You are Veridocs AI, a precise document intelligence assistant.
+Rules:
+- Be concise and answer directly using short bullets.
+- Do not use tables unless the user explicitly asks for a table.
+- Do not add conversational filler, preambles, or a closing recap line.
+- For every factual statement, cite your source using bracketed numbers corresponding to the context passages, like [1] or [2].
+- If the answer cannot be found in the provided excerpts, say exactly: "Not found in the document." Do not speculate or invent facts."""
+
+
+def strip_raw_markers(text: str) -> str:
+    """Convert 【1】 to [1] and remove raw citation symbols."""
+    text = re.sub(r'【(\d+)】', r'[\1]', text)
+    text = re.sub(r'【[^】]*】', '', text)
+    return text
+
+
+class LLMService:
+    """Unified OpenAI-compatible LLM client driven by LLM_BASE_URL, LLM_API_KEY, LLM_MODEL."""
+
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
+        settings = get_settings()
+        self.api_key = (api_key or settings.LLM_API_KEY or "").strip()
+        self.base_url = (base_url or settings.LLM_BASE_URL or "").strip()
+        self.model = (model or settings.LLM_MODEL or "").strip()
+
+        # Provider auto-detection for user keys passed at runtime via headers or UI
+        if self.api_key and not self.base_url:
+            if self.api_key.startswith("gsk_"):
+                self.base_url = "https://api.groq.com/openai/v1"
+                if not self.model or self.model == "gpt-4o-mini":
+                    self.model = "openai/gpt-oss-120b"
+            elif self.api_key.startswith("sk-"):
+                self.base_url = "https://api.openai.com/v1"
+                if not self.model:
+                    self.model = "gpt-4o-mini"
+
+        if not self.model:
+            self.model = "openai/gpt-oss-120b" if "groq.com" in self.base_url else "gpt-4o-mini"
+
+        self.temperature = settings.LLM_TEMPERATURE
+        self.max_tokens = settings.LLM_MAX_TOKENS
+
+        self.client: Optional[OpenAI] = None
+        if self.is_configured():
+            try:
+                self.client = OpenAI(
+                    base_url=self.base_url or None,
+                    api_key=self.api_key or "not-needed",
+                    timeout=30.0,
+                )
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI client: {e}")
+                self.client = None
+
+    def is_configured(self) -> bool:
+        """Check if LLM credentials/endpoint are configured."""
+        if not self.base_url and not self.api_key:
+            return False
+        # If localhost/ollama, api_key is optional
+        if "localhost" in self.base_url or "127.0.0.1" in self.base_url:
+            return True
+        return bool(self.api_key and self.api_key != "not-needed")
+
+    def _build_messages(
+        self,
+        question: str,
+        chunks: List[Dict[str, Any]],
+        history: Optional[List[Dict[str, str]]] = None
+    ) -> List[Dict[str, str]]:
+        """Construct messages payload including system prompt, context chunks, and history."""
+        context_parts = []
+        for i, c in enumerate(chunks):
+            src = c.get("source_file", "Document")
+            page = c.get("page", 1)
+            text = c.get("text", "").strip()
+            idx = i + 1
+            context_parts.append(f"[{idx}] Document: {src} | Page {page}\n{text}")
+
+        context_str = "\n\n".join(context_parts)
+        user_content = f"CONTEXT EXCERPTS:\n{context_str}\n\nQUESTION:\n{question}"
+
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+        if history:
+            for msg in history[-6:]:
+                role = msg.get("role", "user")
+                if role in ("user", "assistant"):
+                    messages.append({"role": role, "content": msg.get("content", "")})
+
+        messages.append({"role": "user", "content": user_content})
+        return messages
+
+    def generate_answer(
+        self,
+        question: str,
+        chunks: List[Dict[str, Any]],
+        history: Optional[List[Dict[str, str]]] = None
+    ) -> str:
+        """Synchronously generate an answer using the configured LLM."""
+        if not self.is_configured() or not self.client:
+            raise ValueError(
+                "No LLM configured. Please set LLM_BASE_URL and LLM_API_KEY in .env, or use the API Key button in the UI."
+            )
+
+        messages = self._build_messages(question, chunks, history)
+        try:
+            extra_body = {}
+            if "groq.com" in self.base_url and "gpt-oss" in self.model:
+                extra_body["reasoning_format"] = "hidden"
+
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                extra_body=extra_body if extra_body else None,
+            )
+            raw_answer = response.choices[0].message.content or ""
+            return strip_raw_markers(raw_answer)
+        except Exception as e:
+            logger.error(f"LLM generation failed: {e}")
+            raise RuntimeError(f"LLM request failed: {str(e)}")
+
+    async def generate_answer_stream(
+        self,
+        question: str,
+        chunks: List[Dict[str, Any]],
+        history: Optional[List[Dict[str, str]]] = None
+    ) -> AsyncGenerator[str, None]:
+        """Stream answer tokens from the configured LLM."""
+        if not self.is_configured() or not self.client:
+            yield (
+                "⚠️ **No LLM is configured.**\n\n"
+                "To enable streaming answers, configure your credentials in `.env` or click the **API Key** button in the header:\n\n"
+                "**Option A: Hosted (Groq / Together / DeepSeek / OpenAI-compatible)**\n"
+                "```env\n"
+                "LLM_BASE_URL=https://api.groq.com/openai/v1\n"
+                "LLM_API_KEY=your_key_here\n"
+                "LLM_MODEL=openai/gpt-oss-120b\n"
+                "```\n\n"
+                "**Option B: Standard OpenAI**\n"
+                "```env\n"
+                "OPENAI_API_KEY=sk-your-openai-key\n"
+                "```\n\n"
+                "**Option C: Local Ollama (Zero cost, private)**\n"
+                "```env\n"
+                "OLLAMA_BASE_URL=http://localhost:11434/v1\n"
+                "OLLAMA_MODEL=llama3.2\n"
+                "```"
+            )
+            return
+
+        messages = self._build_messages(question, chunks, history)
+        try:
+            extra_body = {}
+            if "groq.com" in self.base_url and "gpt-oss" in self.model:
+                extra_body["reasoning_format"] = "hidden"
+
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                stream=True,
+                extra_body=extra_body if extra_body else None,
+            )
+            for chunk in stream:
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if delta and delta.content:
+                        cleaned_token = strip_raw_markers(delta.content)
+                        if cleaned_token:
+                            yield cleaned_token
+        except Exception as e:
+            logger.error(f"Streaming failed: {e}")
+            yield f"\n\n[Error from LLM provider: {str(e)}]"
+
+
+def get_llm_service(
+    base_url: Optional[str] = None,
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+) -> LLMService:
+    return LLMService(base_url=base_url, api_key=api_key, model=model)

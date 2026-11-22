@@ -1,0 +1,107 @@
+"use client";
+
+import { useAppStore } from "@/lib/store";
+import {
+  Plus,
+  PanelLeftClose,
+  PanelLeft,
+  PanelRightClose,
+  PanelRight,
+  FileText,
+} from "lucide-react";
+
+export default function WorkspaceHeader() {
+  const {
+    sessionId,
+    files,
+    activeDocumentName,
+    currentPage,
+    totalPages,
+    leftSidebarCollapsed,
+    rightSidebarCollapsed,
+    setLeftSidebarCollapsed,
+    setRightSidebarCollapsed,
+    clearSession,
+  } = useAppStore();
+
+  return (
+    <header className="h-11 px-3.5 flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] shrink-0 z-40 select-none">
+      <div className="flex items-center gap-2.5">
+        {/* Toggle Left Sidebar */}
+        {sessionId && (
+          <button
+            type="button"
+            onClick={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+            className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
+            title={leftSidebarCollapsed ? "Expand Documents" : "Collapse Sidebar"}
+          >
+            {leftSidebarCollapsed ? (
+              <PanelLeft className="w-4 h-4 text-[var(--color-accent)]" />
+            ) : (
+              <PanelLeftClose className="w-4 h-4" />
+            )}
+          </button>
+        )}
+
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-[10px] font-mono-data">
+            V
+          </div>
+          <span className="text-xs font-serif-doc font-semibold tracking-tight text-[var(--text-primary)]">
+            Veridocs
+          </span>
+        </div>
+
+        {/* Active Document Breadcrumb */}
+        {sessionId && (
+          <div className="hidden sm:flex items-center gap-2 pl-3 ml-1 border-l border-[var(--border-subtle)] text-xs">
+            <span className="text-[10px] font-mono-data px-1.5 py-0.5 rounded bg-[var(--bg-subtle)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+              {files.length} {files.length === 1 ? "doc" : "docs"}
+            </span>
+
+            {activeDocumentName && (
+              <div className="flex items-center gap-1.5 text-[var(--text-secondary)] font-medium truncate max-w-[280px]">
+                <FileText className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
+                <span className="truncate">{activeDocumentName}</span>
+                {totalPages > 0 && (
+                  <span className="text-[10px] text-[var(--text-muted)] font-mono-data shrink-0">
+                    (p. {currentPage}/{totalPages})
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        {sessionId && (
+          <button
+            type="button"
+            onClick={clearSession}
+            className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-subtle)] transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Session</span>
+          </button>
+        )}
+
+        {/* Toggle Right Sidebar */}
+        {sessionId && (
+          <button
+            type="button"
+            onClick={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+            className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
+            title={rightSidebarCollapsed ? "Expand Answers" : "Collapse Answers"}
+          >
+            {rightSidebarCollapsed ? (
+              <PanelRight className="w-4 h-4 text-[var(--color-accent)]" />
+            ) : (
+              <PanelRightClose className="w-4 h-4" />
+            )}
+          </button>
+        )}
+      </div>
+    </header>
+  );
+}

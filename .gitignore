@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+.env.local
+.env.*.local
+*.sqlite
+*.sqlite3
+*.db
+.coverage
+.pytest_cache/
+
+# Node & Next.js
+node_modules/
+.next/
+dist/
+out/
+build/
+*.tsbuildinfo
+
+# Uploads and User Files
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/data/*
+!backend/data/.gitkeep
+uploads/
+*.pdf
+!backend/sample_agreement.pdf
+!public/sample_agreement.pdf
+!backend/sample_resume.pdf
+!public/sample_resume.pdf
+
+# Generated TypeScript environment
+next-env.d.ts
+
+# Testing / Reports
+playwright-report/
+test-results/
+
+# System / IDE
+.DS_Store
+.vscode/
+.idea/
+.vercel
